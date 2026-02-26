@@ -38,10 +38,10 @@ func project1() {
 	go func() {
 		// range可以自动持续读取直到通道被显式close()，所以通道必须要被手动关闭
 		for msg := range chData {
-			if !strings.Contains(msg, "Err") {
+			if strings.Contains(msg, "Err") {
 				chErr <- msg
 			} else {
-				fmt.Println("Pass")
+				fmt.Println(msg + " Pass!")
 			}
 		}
 		// 处理完毕，关闭 chErr，否则消费者会一直死等

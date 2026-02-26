@@ -18,6 +18,7 @@ func worker(id int, jobs <-chan string, results chan<- string, wg *sync.WaitGrou
 		time.Sleep(1 * time.Second) // 模拟耗时
 
 		// 假设有的任务可能会失败，从而不产生结果，也不影响整体运行
+		// 可以说是边处理边打印，具有连续效果
 		results <- fmt.Sprintf("【处理结果】: %s (由 Worker %d 完成)", job, id)
 	}
 }
@@ -48,7 +49,7 @@ func project2() {
 	for j := 1; j <= numJobs; j++ {
 		jobs <- fmt.Sprintf("URL_%d", j)
 	}
-	// 任务发放完毕，关闭 jobs 通道，这会让 Worker 们的 range 循环结束
+	// 任务发放完毕，关闭 jobs 通道，这会让 Worker 们的 range 循环最终能够结束
 	close(jobs)
 
 	fmt.Println("--- 开始收集结果 ---")
