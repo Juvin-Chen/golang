@@ -32,9 +32,8 @@ func ReadLines(path string) ([]string, error) {
 	return lines, nil
 }
 
-// WriteToFile 将内容写入指定文件
-// 使用 os.OpenFile 创建/覆盖文件，权限 0644
-func WriteToFile(path string, content string) error {
+// WriteToFile 将字节切片写入指定文件，处理底层数据最通用的类型是字节切片 []byte
+func WriteToFile(path string, data []byte) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -42,10 +41,12 @@ func WriteToFile(path string, content string) error {
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
-	if _, err := writer.WriteString(content); err != nil {
+	if _, err := writer.Write(data); err != nil {
 		return err
 	}
 
 	// 刷新缓冲区，确保所有数据写入磁盘
 	return writer.Flush()
 }
+
+// 其实 Go 标准库提供了一个极简的封装 os.WriteFile(path, data, 0644)，一行代码就能替代上面这一整段。目前是手动使用 bufio

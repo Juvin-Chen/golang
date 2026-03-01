@@ -1,42 +1,43 @@
+// 封装日志分析包
 // Package analyzer 提供日志解析功能，支持从日志行中提取级别、IP等核心信息
-// 核心函数为 ParseLog，可解析格式为 "[LEVEL] ... IP: xxx.xxx.xxx.xxx" 的日志行
+// 核心函数为 ParseLog，可解析格式为 "... [LEVEL] ... IP: xxx.xxx.xxx.xxx" 的日志行
 
 package analyzer
 
 import (
 	"errors"
 	"regexp"
+	"strings"
 )
 
-// 封装日志分析包
-
-// LogEntry 表示一条日志记录
+// LogEntry 定义了日志的数据结构
 type LogEntry struct {
 	Level string // INFO, ERROR, WARN
-	IP    string
-	Msg   string // 未提取的部分（可后续扩展）
+	IP    string // IP 地址
+	Msg   string // 日志的具体信息
 }
 
-// logRegex 是预编译的正则表达式，用于匹配日志格式
-var logRegex = regexp.MustCompile(`\[(INFO|ERROR|WARN)\].*?IP:\s*(\d{1,3}(?:\.\d{1,3}){3})`)
+// 预编译正则表达式，避免重复编译
+var logRegex = regexp.MustCompile(`\[(INFO|ERROR|WARN)\]\s+(.*?)(?:,\s*)?IP:\s*(\d{1,3}(?:\.\d{1,3}){3})`)
 
-// ParseLog 解析日志行，提取日志级别和IP地址
-// 返回 LogEntry 指针和错误信息
+// ParseLog 解析单行日志，成功返回结构体指针，失败返回 error
 func ParseLog(line string) (*LogEntry, error) {
-	// 使用预编译的正则表达式匹配日志行
+	// 返回一个切片，包含完整匹配项以及所有 () 分组捕获的内容
 	matches := logRegex.FindStringSubmatch(line)
-	if matches == nil {
+
+	// 如果没有匹配成功，或者捕获的分组数量不是4个
+	if len(matches) != 4 {
 		return nil, errors.New("invalid log format")
 	}
 
-	// 提取匹配的组：[0]是完整匹配，[1]是级别，[2]是IP
-	level := matches[1]
-	ip := matches[2]
-
-	// 构建日志条目（Msg 未提取，设为空字符串）
+	// 提取数据并组装返回
+	// matches[0] 是整行匹配到的字符串
+	// matches[1] 是第一个括号 (INFO|ERROR|WARN)
+	// matches[2] 是第二个括号 (.*?) 提取出的 Msg
+	// matches[3] 是第三个括号提取出的 IP
 	return &LogEntry{
-		Level: level,
-		IP:    ip,
-		Msg:   "", // 未提取部分留空
+		Level: matches[1],
+		Msg:   strings.TrimSpace(matches[2]), // 去除头尾可能多余的空格
+		IP:    matches[3],
 	}, nil
 }
